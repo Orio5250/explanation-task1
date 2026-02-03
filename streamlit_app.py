@@ -1,82 +1,107 @@
 import streamlit as st
 
-# クイズのデータセット
+# クイズデータ：純粋なコードの意味（挙動）にフォーカス
 quiz_data = [
     {
-        "code": "def f(x, a):\n    return x**3 - x - a",
-        "question": "この関数 f(x, a) は何を定義していますか？",
-        "options": ["xの3次方程式の左辺", "xの2乗を計算する式", "aの値を入力する関数", "グラフを描画する関数"],
-        "answer": "xの3次方程式の左辺"
+        "code": "def f(x, a):",
+        "question": "Pythonの文法において、この `def` キーワードは何を行っていますか？",
+        "options": [
+            "変数 f に x と a を代入している",
+            "新しい関数を定義しようとしている",
+            "既存の関数 f を呼び出している",
+            "条件分岐を開始している"
+        ],
+        "answer": "新しい関数を定義しようとしている"
+    },
+    {
+        "code": "x**3",
+        "question": "この `**` という演算子はどういう計算を意味しますか？",
+        "options": [
+            "x を 3倍する",
+            "x を 3回足す",
+            "x の 3乗（べき乗）を計算する",
+            "x を 3回繰り返す文字列にする"
+        ],
+        "answer": "x の 3乗（べき乗）を計算する"
     },
     {
         "code": "while abs(R - L) >= tolerance:",
-        "question": "このwhileループの終了条件は何を意味していますか？",
-        "options": ["計算回数が上限に達したとき", "区間の幅が許容誤差より小さくなったとき", "解が0になったとき", "ユーザーがendと入力したとき"],
-        "answer": "区間の幅が許容誤差より小さくなったとき"
+        "question": "この `while` 文が繰り返される「条件」を正確に説明しているのはどれですか？",
+        "options": [
+            "R と L の差の絶対値が tolerance 以上である間",
+            "R と L の差が tolerance と等しくなるまで",
+            "R と L の差が tolerance 未満になった瞬間だけ",
+            "変数 tolerance が 0 になるまで"
+        ],
+        "answer": "R と L の差の絶対値が tolerance 以上である間"
     },
     {
-        "code": "M = (L + R) / 2",
-        "question": "この行で行っている処理は何ですか？",
-        "options": ["右端の値を更新している", "左端の値を更新している", "探索区間の中間点を求めている", "誤差を計算している"],
-        "answer": "探索区間の中間点を求めている"
+        "code": "user_input.lower() == \"end\"",
+        "question": "`.lower()` メソッドを使用する主な目的は何ですか？",
+        "options": [
+            "入力された文字数をカウントするため",
+            "入力が数値かどうかを判定するため",
+            "大文字・小文字の区別を無視して比較できるようにするため",
+            "文字列を末尾から読み取るため"
+        ],
+        "answer": "大文字・小文字の区別を無視して比較できるようにするため"
     },
     {
-        "code": "elif f(L, a) * f_M < 0:\n    R = M",
-        "question": "この条件式が真（True）の場合、何がわかりますか？",
-        "options": ["解が右半分の区間にある", "解が左半分の区間にある", "解がちょうどMである", "解が存在しない"],
-        "answer": "解が左半分の区間にある"
+        "code": "return None",
+        "question": "関数内で `return None` が実行されると、何が起こりますか？",
+        "options": [
+            "エラーが発生してプログラムが止まる",
+            "何も返さずに（空の値を返して）関数を終了する",
+            "数値の 0 を返す",
+            "関数を最初からやり直す"
+        ],
+        "answer": "何も返さずに（空の値を返して）関数を終了する"
     }
 ]
 
-# アプリのタイトル
-st.title("🐍 Pythonコード解説クイズ")
-st.write("二分法のコードを1ブロックずつ読み解きましょう！")
+# --- Streamlit UI ---
+st.set_page_config(page_title="Python Syntax Quiz", layout="centered")
 
-# セッション状態の初期化（進捗管理）
-if 'current_question' not in st.session_state:
-    st.session_state.current_question = 0
+st.title("🧩 Python文法解読クイズ")
+st.caption("コードの「純粋な挙動」を正確に理解できているかチェックしましょう。")
+
+if 'step' not in st.session_state:
+    st.session_state.step = 0
     st.session_state.score = 0
-    st.session_state.quiz_complete = False
+    st.session_state.finished = False
 
-# クイズ終了画面
-if st.session_state.quiz_complete:
-    st.success(f"全問終了！あなたのスコアは {st.session_state.score} / {len(quiz_data)} です。")
-    if st.button("もう一度挑戦する"):
-        st.session_state.current_question = 0
-        st.session_state.score = 0
-        st.session_state.quiz_complete = False
-        st.rerun()
-else:
-    # 現在の問題を取得
-    q = quiz_data[st.session_state.current_question]
+if not st.session_state.finished:
+    q = quiz_data[st.session_state.step]
     
-    st.subheader(f"問題 {st.session_state.current_question + 1}")
-    
-    # コードを表示
+    st.markdown(f"### 問題 {st.session_state.step + 1} / {len(quiz_data)}")
     st.code(q["code"], language="python")
     
-    # 質問と選択肢
-    st.write(q["question"])
-    
-    # 選択肢をフォームで表示
-    with st.form(key=f"quiz_form_{st.session_state.current_question}"):
-        user_choice = st.radio("答えを選んでください：", q["options"], index=None)
-        submit_button = st.form_submit_button(label="回答する")
-
-        if submit_button:
-            if user_choice is None:
-                st.warning("選択肢を選んでください。")
+    # フォームを使用して再描画を制御
+    with st.form(key=f"form_{st.session_state.step}"):
+        choice = st.radio("このコードが命令していることは？", q["options"], index=None)
+        submitted = st.form_submit_button("回答を確定")
+        
+        if submitted:
+            if choice == q["answer"]:
+                st.session_state.score += 1
+                st.success("正解です！")
             else:
-                if user_choice == q["answer"]:
-                    st.success("正解！✨")
-                    st.session_state.score += 1
-                else:
-                    st.error(f"残念！正解は「{q['answer']}」でした。")
-                
-                # 次の問題へ進む準備
-                if st.session_state.current_question + 1 < len(quiz_data):
-                    st.session_state.current_question += 1
-                    st.button("次の問題へ")
-                else:
-                    st.session_state.quiz_complete = True
-                    st.button("結果を見る")
+                st.error(f"不正解です。正解は: {q['answer']}")
+            
+            # 次のステップへ
+            if st.session_state.step + 1 < len(quiz_data):
+                st.session_state.step += 1
+                st.form_submit_button("次の問題へ")
+            else:
+                st.session_state.finished = True
+                st.form_submit_button("結果を見る")
+else:
+    st.balloons()
+    st.header("リザルト")
+    st.metric("正解数", f"{st.session_state.score} / {len(quiz_data)}")
+    
+    if st.button("最初から解き直す"):
+        st.session_state.step = 0
+        st.session_state.score = 0
+        st.session_state.finished = False
+        st.rerun()
